@@ -3,7 +3,6 @@ import datetime
 from flask import Blueprint
 from flask import render_template, request, redirect, url_for, jsonify
 from flask import g
-
 from . import db
 
 bp = Blueprint("pets", "pets", url_prefix="")
@@ -27,10 +26,36 @@ def dashboard():
     cursor = conn.cursor()
     oby = request.args.get("order_by", "id") # TODO. This is currently not used. 
     order = request.args.get("order", "asc")
-    if order == "asc":
+    if oby == "id":
+      if order == "asc":
         cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.id")
-    else:
+      else:
         cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.id desc")
+    
+    elif oby == "name":
+      if order == "asc":
+        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.name")
+      else:
+        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.name desc")
+        
+    elif oby == "bought":
+      if order == "asc":
+        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.bought")
+      else:
+        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.bought desc")
+        
+    elif oby == "sold":
+      if order == "asc":
+        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.sold")
+      else:
+        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.sold desc")
+        
+    elif oby == "species":
+      if order == "asc":
+        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.species")
+      else:
+        cursor.execute(f"select p.id, p.name, p.bought, p.sold, s.name from pet p, animal s where p.species = s.id order by p.species desc")
+    
     pets = cursor.fetchall()
     return render_template('index.html', pets = pets, order="desc" if order=="asc" else "asc")
 
@@ -63,6 +88,7 @@ def edit(pid):
         cursor.execute("select t.name from tags_pets tp, tag t where tp.pet = ? and tp.tag = t.id", [pid])
         tags = (x[0] for x in cursor.fetchall())
         name, bought, sold, description, species = pet
+        
         data = dict(id = pid,
                     name = name,
                     bought = format_date(bought),
@@ -74,7 +100,20 @@ def edit(pid):
     elif request.method == "POST":
         description = request.form.get('description')
         sold = request.form.get("sold")
-        # TODO Handle sold
+        if sold:
+          #print(sold)
+          #print(pid)
+          sold = datetime.datetime.now().strftime("%Y-%m-%d")
+          #print(sold)
+          #print(type(pid))
+          #print(type(sold))
+          cursor.execute("update pet set sold = ? where id = ?",(sold,int(pid)))
+        else:
+          print(pid)
+          sold = None
+          cursor.execute("update pet set sold = ? where id = ?",(sold,int(pid)))
+       
+        conn.commit()
         return redirect(url_for("pets.pet_info", pid=pid), 302)
         
     
