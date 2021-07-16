@@ -100,6 +100,7 @@ def edit(pid):
     elif request.method == "POST":
         description = request.form.get('description')
         sold = request.form.get("sold")
+        
         if sold:
           #print(sold)
           #print(pid)
@@ -107,11 +108,11 @@ def edit(pid):
           #print(sold)
           #print(type(pid))
           #print(type(sold))
-          cursor.execute("update pet set sold = ? where id = ?",(sold,int(pid)))
+          cursor.execute("update pet set sold = ?, description = ? where id = ?",(sold,description,int(pid)))
         else:
           print(pid)
           sold = None
-          cursor.execute("update pet set sold = ? where id = ?",(sold,int(pid)))
+          cursor.execute("update pet set sold = ?, description = ? where id = ?",(sold,description,int(pid)))
        
         conn.commit()
         return redirect(url_for("pets.pet_info", pid=pid), 302)
